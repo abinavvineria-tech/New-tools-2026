@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>Huntrix Analytics SaaS</title>
+<title>Huntrix SaaS Dashboard</title>
 
 <style>
 body {
@@ -10,35 +10,33 @@ body {
     background: #0b1220;
     color: white;
     display: flex;
+    height: 100vh;
 }
 
-/* LEFT NAV (SaaS STYLE) */
-.nav {
-    width: 260px;
+/* SIDEBAR */
+.sidebar {
+    width: 240px;
     background: #0f172a;
     padding: 20px;
     border-right: 1px solid #1f2937;
 }
 
-.brand {
-    font-size: 20px;
-    font-weight: bold;
+.sidebar h2 {
     color: #22d3ee;
-    margin-bottom: 20px;
 }
 
-.nav button {
+.sidebar button {
     width: 100%;
-    margin: 6px 0;
+    margin: 8px 0;
     padding: 10px;
+    border-radius: 10px;
     background: #111827;
     border: 1px solid #1f2937;
     color: white;
-    border-radius: 10px;
     cursor: pointer;
 }
 
-.nav button:hover {
+.sidebar button:hover {
     background: #22d3ee;
     color: black;
 }
@@ -46,40 +44,23 @@ body {
 /* MAIN */
 .main {
     flex: 1;
-    padding: 25px;
+    padding: 20px;
+    overflow-y: auto;
 }
 
-/* TOP BAR */
+/* TOP */
 .top {
     display: flex;
     justify-content: space-between;
-    align-items: center;
 }
 
-.badge {
-    background: #22d3ee;
-    color: black;
-    padding: 4px 10px;
-    border-radius: 999px;
-    font-size: 12px;
-}
-
-/* CARDS */
-.grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 15px;
-}
-
+/* CARD */
 .card {
     background: #0f172a;
     border: 1px solid #1f2937;
     padding: 15px;
+    margin: 12px 0;
     border-radius: 12px;
-}
-
-.card:hover {
-    border-color: #22d3ee55;
 }
 
 /* INPUT */
@@ -97,25 +78,11 @@ button.run {
     background: #22d3ee;
     border: none;
     border-radius: 10px;
-    font-weight: bold;
     cursor: pointer;
+    font-weight: bold;
 }
 
-/* WINNER */
-.winner {
-    color: #fbbf24;
-}
-
-/* LEADERBOARD */
-.user {
-    padding: 10px;
-    margin: 8px 0;
-    background: #0b1220;
-    border-left: 3px solid #22d3ee;
-    border-radius: 10px;
-}
-
-/* BAR */
+/* LEADERBOARD BAR */
 .bar {
     height: 6px;
     background: #1f2937;
@@ -124,124 +91,122 @@ button.run {
 
 .fill {
     height: 100%;
-    background: linear-gradient(90deg, #22d3ee, #9333ea);
+    background: linear-gradient(90deg,#22d3ee,#9333ea);
 }
 
-/* SaaS label */
-.pro {
-    font-size: 11px;
-    color: #94a3b8;
+/* WINNER */
+.winner {
+    color: #fbbf24;
+}
+
+/* ERROR */
+.error {
+    color: #f87171;
 }
 </style>
 
 <script>
-window.onload = () => {
-    document.querySelectorAll(".fill").forEach(b => {
-        b.style.width = b.getAttribute("data-width") + "%";
+async function runAnalysis() {
+    const video = document.querySelector("input").value;
+
+    const res = await fetch("/api/run", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({ video_id: video })
     });
-};
+
+    const data = await res.json();
+
+    // ---------------- ERROR ----------------
+    document.getElementById("error").innerText =
+        data.error ? "⚠ " + data.error : "";
+
+    // ---------------- STATS ----------------
+    if (data.stats) {
+        document.getElementById("stats").innerHTML = `
+            <b>Total Comments:</b> ${data.stats.total}<br>
+            <b>Users:</b> ${data.stats.users}
+        `;
+    }
+
+    // ---------------- WINNER ----------------
+    if (data.winner) {
+        document.getElementById("winner").innerHTML = `
+            <b>${data.winner.author}</b><br>
+            👍 ${data.winner.likes}<br><br>
+            ${data.winner.text}
+        `;
+    } else {
+        document.getElementById("winner").innerText = "No winner yet";
+    }
+
+    // ---------------- LEADERBOARD ----------------
+    let html = "";
+
+    if (data.leaderboard && data.leaderboard.length > 0) {
+        let max = data.leaderboard[0][1];
+
+        data.leaderboard.forEach(([name, score]) => {
+            let p = Math.floor((score / max) * 100);
+
+            html += `
+                <div style="margin:10px 0;">
+                    <b>${name}</b> — ${score}
+                    <div class="bar">
+                        <div class="fill" style="width:${p}%"></div>
+                    </div>
+                </div>
+            `;
+        });
+    } else {
+        html = "No data";
+    }
+
+    document.getElementById("leaderboard").innerHTML = html;
+}
 </script>
 
 </head>
 
 <body>
 
-<!-- NAV -->
-<div class="nav">
-    <div class="brand">🔥 Huntrix SaaS</div>
-
+<!-- SIDEBAR -->
+<div class="sidebar">
+    <h2>🔥 Huntrix SaaS</h2>
     <button>📊 Dashboard</button>
     <button>📈 Analytics</button>
-    <button>👥 Users</button>
     <button>⚙ Settings</button>
-
-    <p class="pro">Pro features locked 🔒 (UI only)</p>
 </div>
 
 <!-- MAIN -->
 <div class="main">
 
 <div class="top">
-    <h2>YouTube Intelligence Dashboard</h2>
-    <span class="badge">SAAS MODE</span>
+    <h2>YouTube Intelligence</h2>
 </div>
 
 <!-- INPUT -->
 <div class="card">
-<form method="POST">
-    <input name="video_id" placeholder="Paste YouTube URL or ID">
-    <button class="run">Analyze</button>
-</form>
+    <input placeholder="Paste YouTube URL or ID">
+    <button class="run" onclick="runAnalysis()">Analyze</button>
 </div>
 
 <!-- ERROR -->
-{% if error %}
-<div class="card" style="color:#f87171;">
-⚠ {{ error }}
-</div>
-{% endif %}
+<div class="card error" id="error"></div>
 
 <!-- STATS -->
-{% if stats %}
-<div class="grid">
-
-<div class="card">
-<h3>📊 Comments</h3>
-<p>{{ stats.total }}</p>
-</div>
-
-<div class="card">
-<h3>👥 Users</h3>
-<p>{{ stats.users }}</p>
-</div>
-
-<div class="card">
-<h3>🔥 Mode</h3>
-<p>SaaS Active</p>
-</div>
-
-</div>
-{% endif %}
+<div class="card" id="stats"></div>
 
 <!-- WINNER -->
 <div class="card">
-<h3>🏆 Top Comment</h3>
-
-{% if winner %}
-<div class="winner">
-<b>{{ winner.author }}</b><br>
-👍 {{ winner.likes }}<br><br>
-{{ winner.text }}
-</div>
-{% else %}
-<p>No data yet</p>
-{% endif %}
+    <h3>🏆 Top Comment</h3>
+    <div id="winner"></div>
 </div>
 
 <!-- LEADERBOARD -->
 <div class="card">
-<h3>📊 Leaderboard</h3>
-
-{% if leaderboard %}
-{% set max = leaderboard[0][1] %}
-
-{% for name, score in leaderboard %}
-{% set p = (score / max * 100) | int %}
-
-<div class="user">
-<b>{{ name }}</b> — {{ score }}
-
-<div class="bar">
-<div class="fill" data-width="{{ p }}"></div>
-</div>
-
-</div>
-
-{% endfor %}
-{% else %}
-<p>No data</p>
-{% endif %}
-
+    <h3>📊 Leaderboard</h3>
+    <div id="leaderboard"></div>
 </div>
 
 </div>
