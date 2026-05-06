@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Huntrix Analytics SaaS</title>
+
+<style>
+body {
+    margin: 0;
+    font-family: system-ui;
+    background: #0b1220;
+    color: white;
+    display: flex;
+}
+
+/* LEFT NAV (SaaS STYLE) */
+.nav {
+    width: 260px;
+    background: #0f172a;
+    padding: 20px;
+    border-right: 1px solid #1f2937;
+}
+
+.brand {
+    font-size: 20px;
+    font-weight: bold;
+    color: #22d3ee;
+    margin-bottom: 20px;
+}
+
+.nav button {
+    width: 100%;
+    margin: 6px 0;
+    padding: 10px;
+    background: #111827;
+    border: 1px solid #1f2937;
+    color: white;
+    border-radius: 10px;
+    cursor: pointer;
+}
+
+.nav button:hover {
+    background: #22d3ee;
+    color: black;
+}
+
+/* MAIN */
+.main {
+    flex: 1;
+    padding: 25px;
+}
+
+/* TOP BAR */
+.top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.badge {
+    background: #22d3ee;
+    color: black;
+    padding: 4px 10px;
+    border-radius: 999px;
+    font-size: 12px;
+}
+
+/* CARDS */
+.grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 15px;
+}
+
+.card {
+    background: #0f172a;
+    border: 1px solid #1f2937;
+    padding: 15px;
+    border-radius: 12px;
+}
+
+.card:hover {
+    border-color: #22d3ee55;
+}
+
+/* INPUT */
+input {
+    width: 70%;
+    padding: 10px;
+    border-radius: 10px;
+    border: 1px solid #334155;
+    background: #0b1220;
+    color: white;
+}
+
+button.run {
+    padding: 10px 15px;
+    background: #22d3ee;
+    border: none;
+    border-radius: 10px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+/* WINNER */
+.winner {
+    color: #fbbf24;
+}
+
+/* LEADERBOARD */
+.user {
+    padding: 10px;
+    margin: 8px 0;
+    background: #0b1220;
+    border-left: 3px solid #22d3ee;
+    border-radius: 10px;
+}
+
+/* BAR */
+.bar {
+    height: 6px;
+    background: #1f2937;
+    border-radius: 10px;
+}
+
+.fill {
+    height: 100%;
+    background: linear-gradient(90deg, #22d3ee, #9333ea);
+}
+
+/* SaaS label */
+.pro {
+    font-size: 11px;
+    color: #94a3b8;
+}
+</style>
+
+<script>
+window.onload = () => {
+    document.querySelectorAll(".fill").forEach(b => {
+        b.style.width = b.getAttribute("data-width") + "%";
+    });
+};
+</script>
+
+</head>
+
+<body>
+
+<!-- NAV -->
+<div class="nav">
+    <div class="brand">🔥 Huntrix SaaS</div>
+
+    <button>📊 Dashboard</button>
+    <button>📈 Analytics</button>
+    <button>👥 Users</button>
+    <button>⚙ Settings</button>
+
+    <p class="pro">Pro features locked 🔒 (UI only)</p>
+</div>
+
+<!-- MAIN -->
+<div class="main">
+
+<div class="top">
+    <h2>YouTube Intelligence Dashboard</h2>
+    <span class="badge">SAAS MODE</span>
+</div>
+
+<!-- INPUT -->
+<div class="card">
+<form method="POST">
+    <input name="video_id" placeholder="Paste YouTube URL or ID">
+    <button class="run">Analyze</button>
+</form>
+</div>
+
+<!-- ERROR -->
+{% if error %}
+<div class="card" style="color:#f87171;">
+⚠ {{ error }}
+</div>
+{% endif %}
+
+<!-- STATS -->
+{% if stats %}
+<div class="grid">
+
+<div class="card">
+<h3>📊 Comments</h3>
+<p>{{ stats.total }}</p>
+</div>
+
+<div class="card">
+<h3>👥 Users</h3>
+<p>{{ stats.users }}</p>
+</div>
+
+<div class="card">
+<h3>🔥 Mode</h3>
+<p>SaaS Active</p>
+</div>
+
+</div>
+{% endif %}
+
+<!-- WINNER -->
+<div class="card">
+<h3>🏆 Top Comment</h3>
+
+{% if winner %}
+<div class="winner">
+<b>{{ winner.author }}</b><br>
+👍 {{ winner.likes }}<br><br>
+{{ winner.text }}
+</div>
+{% else %}
+<p>No data yet</p>
+{% endif %}
+</div>
+
+<!-- LEADERBOARD -->
+<div class="card">
+<h3>📊 Leaderboard</h3>
+
+{% if leaderboard %}
+{% set max = leaderboard[0][1] %}
+
+{% for name, score in leaderboard %}
+{% set p = (score / max * 100) | int %}
+
+<div class="user">
+<b>{{ name }}</b> — {{ score }}
+
+<div class="bar">
+<div class="fill" data-width="{{ p }}"></div>
+</div>
+
+</div>
+
+{% endfor %}
+{% else %}
+<p>No data</p>
+{% endif %}
+
+</div>
+
+</div>
+
+</body>
+</html>
