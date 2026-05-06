@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>Huntrix SaaS Dashboard</title>
+<title>Huntrix SaaS Pro</title>
 
 <style>
 body {
@@ -13,32 +13,41 @@ body {
     height: 100vh;
 }
 
-/* SIDEBAR */
+/* 🔥 FULL SIDEBAR FIX */
 .sidebar {
-    width: 240px;
+    width: 280px;
+    height: 100vh;
     background: #0f172a;
-    padding: 20px;
     border-right: 1px solid #1f2937;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
 }
 
 .sidebar h2 {
     color: #22d3ee;
+    margin-bottom: 20px;
 }
 
+/* BIG SAAS BUTTONS */
 .sidebar button {
     width: 100%;
+    padding: 14px;
     margin: 8px 0;
-    padding: 10px;
-    border-radius: 10px;
+    border: none;
+    border-radius: 12px;
     background: #111827;
-    border: 1px solid #1f2937;
     color: white;
+    font-size: 15px;
     cursor: pointer;
+    text-align: left;
+    transition: 0.2s;
 }
 
 .sidebar button:hover {
     background: #22d3ee;
     color: black;
+    transform: translateX(5px);
 }
 
 /* MAIN */
@@ -52,6 +61,7 @@ body {
 .top {
     display: flex;
     justify-content: space-between;
+    margin-bottom: 15px;
 }
 
 /* CARD */
@@ -59,8 +69,8 @@ body {
     background: #0f172a;
     border: 1px solid #1f2937;
     padding: 15px;
-    margin: 12px 0;
     border-radius: 12px;
+    margin-bottom: 12px;
 }
 
 /* INPUT */
@@ -75,14 +85,14 @@ input {
 
 button.run {
     padding: 10px 15px;
-    background: #22d3ee;
     border: none;
     border-radius: 10px;
-    cursor: pointer;
+    background: #22d3ee;
     font-weight: bold;
+    cursor: pointer;
 }
 
-/* LEADERBOARD BAR */
+/* BAR */
 .bar {
     height: 6px;
     background: #1f2937;
@@ -94,72 +104,59 @@ button.run {
     background: linear-gradient(90deg,#22d3ee,#9333ea);
 }
 
-/* WINNER */
-.winner {
-    color: #fbbf24;
-}
+/* TABS */
+.tab { display: none; }
+.active { display: block; }
 
-/* ERROR */
-.error {
-    color: #f87171;
-}
+.error { color: #f87171; }
 </style>
 
 <script>
-async function runAnalysis() {
-    const video = document.querySelector("input").value;
+function show(tab){
+    document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
+    document.getElementById(tab).classList.add("active");
+}
+
+async function runAnalysis(){
+    const video = document.getElementById("video").value;
 
     const res = await fetch("/api/run", {
         method: "POST",
-        headers: {"Content-Type": "application/json"},
-        body: JSON.stringify({ video_id: video })
+        headers: {"Content-Type":"application/json"},
+        body: JSON.stringify({video_id: video})
     });
 
     const data = await res.json();
 
-    // ---------------- ERROR ----------------
     document.getElementById("error").innerText =
         data.error ? "⚠ " + data.error : "";
 
-    // ---------------- STATS ----------------
-    if (data.stats) {
-        document.getElementById("stats").innerHTML = `
-            <b>Total Comments:</b> ${data.stats.total}<br>
-            <b>Users:</b> ${data.stats.users}
-        `;
-    }
+    document.getElementById("stats").innerHTML = `
+        <b>Total Comments:</b> ${data.stats?.total || 0}<br>
+        <b>Users:</b> ${data.stats?.users || 0}
+    `;
 
-    // ---------------- WINNER ----------------
-    if (data.winner) {
-        document.getElementById("winner").innerHTML = `
-            <b>${data.winner.author}</b><br>
-            👍 ${data.winner.likes}<br><br>
-            ${data.winner.text}
-        `;
-    } else {
-        document.getElementById("winner").innerText = "No winner yet";
-    }
+    document.getElementById("winner").innerHTML = data.winner ?
+        `<b>${data.winner.author}</b><br>👍 ${data.winner.likes}<br>${data.winner.text}`
+        : "No data";
 
-    // ---------------- LEADERBOARD ----------------
     let html = "";
 
-    if (data.leaderboard && data.leaderboard.length > 0) {
+    if(data.leaderboard){
         let max = data.leaderboard[0][1];
 
-        data.leaderboard.forEach(([name, score]) => {
-            let p = Math.floor((score / max) * 100);
+        data.leaderboard.forEach(([n,s])=>{
+            let p = Math.floor((s/max)*100);
 
             html += `
                 <div style="margin:10px 0;">
-                    <b>${name}</b> — ${score}
+                    <b>${n}</b> — ${s}
                     <div class="bar">
                         <div class="fill" style="width:${p}%"></div>
                     </div>
                 </div>
             `;
         });
-    } else {
-        html = "No data";
     }
 
     document.getElementById("leaderboard").innerHTML = html;
@@ -170,43 +167,56 @@ async function runAnalysis() {
 
 <body>
 
-<!-- SIDEBAR -->
+<!-- 🔥 SIDEBAR (FIXED BIG SAAS MENU) -->
 <div class="sidebar">
     <h2>🔥 Huntrix SaaS</h2>
-    <button>📊 Dashboard</button>
-    <button>📈 Analytics</button>
-    <button>⚙ Settings</button>
+
+    <button onclick="show('dashboard')">🏠 Dashboard</button>
+    <button onclick="show('analytics')">📊 Analytics</button>
+    <button onclick="show('settings')">⚙ Settings</button>
 </div>
 
 <!-- MAIN -->
 <div class="main">
 
-<div class="top">
-    <h2>YouTube Intelligence</h2>
-</div>
+<!-- DASHBOARD -->
+<div id="dashboard" class="tab active">
 
-<!-- INPUT -->
 <div class="card">
-    <input placeholder="Paste YouTube URL or ID">
+    <input id="video" placeholder="YouTube URL or ID">
     <button class="run" onclick="runAnalysis()">Analyze</button>
 </div>
 
-<!-- ERROR -->
 <div class="card error" id="error"></div>
 
-<!-- STATS -->
 <div class="card" id="stats"></div>
 
-<!-- WINNER -->
 <div class="card">
     <h3>🏆 Top Comment</h3>
     <div id="winner"></div>
 </div>
 
-<!-- LEADERBOARD -->
 <div class="card">
     <h3>📊 Leaderboard</h3>
     <div id="leaderboard"></div>
+</div>
+
+</div>
+
+<!-- ANALYTICS -->
+<div id="analytics" class="tab">
+    <div class="card">
+        <h3>📊 Analytics</h3>
+        <p>SaaS analytics panel active.</p>
+    </div>
+</div>
+
+<!-- SETTINGS -->
+<div id="settings" class="tab">
+    <div class="card">
+        <h3>⚙ Settings</h3>
+        <p>UI settings panel.</p>
+    </div>
 </div>
 
 </div>
